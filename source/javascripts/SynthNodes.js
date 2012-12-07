@@ -24,7 +24,8 @@
     this.dec = d;
     this.sus = s;
     this.rel = r;
-    this.maxVal = .3;
+    this.maxVal = 1;
+    this.isPlaying = false;
 
     this.cancelCurrentFades = function(){
       var now = this.context.currentTime;
@@ -32,8 +33,9 @@
       console.log(gain);
       gain.cancelScheduledValues(now);
     }
-  
+
     this.trigger = function(length){
+      this.isPlaying = true;
       var now = this.context.currentTime;
       var gain = this.gain;
       gain.cancelScheduledValues(now);
@@ -41,7 +43,7 @@
       gain.linearRampToValueAtTime(this.maxVal, now + this.att);
       now += this.att;
       gain.linearRampToValueAtTime(this.sus, now + this.dec);
-      
+
       if (length){
         var self = this;
         setTimeout(function(){ self.release(); }, length * 1000);
@@ -53,6 +55,9 @@
       gain.cancelScheduledValues(now);
       gain.setValueAtTime(gain.value, now);
       gain.linearRampToValueAtTime(0, now + this.rel);
+      setTimeout(function(){
+        this.isPlaying = false;
+      },now+this.rel);
     }
   }
 
@@ -105,6 +110,63 @@
 
   /** INSTRUMENTS **/
 
+
+  function Oscillator(context){
+    var osc1 = this.osc1 = context.createOscillator();
+    var osc2 = this.osc2 = context.createOscillator();
+    var freq1 = this.freq1 = 440;
+    var freq2 = this.freq2 = 220;
+    osc1.frequency.value = freq1;
+    osc2.frequency.value = freq2;
+    var wave1 = this.wave1 = 0;
+    var wave2 = this.wave2 = 2;
+    osc1.type = wave1;
+    osc2.type = wave2;
+    var env  = this.env = context.createEnvelope(0.001, 0.5, 0.6, 0.3);
+    osc1.connect(env);
+    osc2.connect(env);
+    osc1.noteOn(0);
+    osc2.noteOn(0);
+    this.currKeyCode = undefined;
+  }
+
+  Oscillator.prototype.assignToKey = function(keyCode){
+    this.currKeyCode = keyCode;
+    console.log(this.currKeyCode);
+  }
+  Oscillator.prototype.removeKey = function(){
+    this.currKeyCode = undefined;
+  }
+  Oscillator.prototype.isAssignedToKey = function(){
+    return (this.currKeyCode !== undefined) ? true : false;
+  }
+  Oscillator.prototype.trigger = function(e){
+    this.assignToKey(e.keyCode);
+    this.env.trigger();
+  }
+  Oscillator.prototype.release = function(now){
+    this.env.release();
+    var self = this;
+    setTimeout(function(){
+        self.removeKey();
+    },now+self.env.rel);
+  }
+  Oscillator.prototype.connect = function(dest){
+    this.env.connect(dest);
+  }
+  Oscillator.prototype.wavetype = function(wave, oscillator){
+    if (oscillator == 1) this.osc1.type = wave;
+    if (oscillator == 2) this.osc2.type = wave;
+  }
+  Oscillator.prototype.frequency = function(freq1, freq2){
+    this.osc1.frequency.value = freq1;
+    this.osc2.frequency.value = freq2;
+    console.log('freq updated', freq1, freq2);
+  }
+  Oscillator.prototype.detune = function(val){
+    this.osc2.detune.value = val;
+  }
+
   function Drum(context){
     var osc = this.osc = context.createOscillator();
     osc.frequency.value = 45;
@@ -136,7 +198,7 @@
   HiHat.prototype.connect = function(dest){
     this.env.connect(dest);
   }
-
+  AudioContext.prototype.createCustomOscillator = function(){ return new Oscillator(this); };
   AudioContext.prototype.createDrum = function(){ return new Drum(this); };
   AudioContext.prototype.createHiHat = function(){ return new HiHat(this); };
 

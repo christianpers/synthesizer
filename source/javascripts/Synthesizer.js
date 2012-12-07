@@ -79,7 +79,7 @@ Synthesizer.prototype.registerEventListeners = function(){
 }
 
 Synthesizer.prototype.createPianoModule = function(){
-	
+
 	this.keyIsDown = [];
 	document.addEventListener('keydown', keydown, false);
 	document.addEventListener('keyup', keyup, false);
@@ -89,7 +89,7 @@ Synthesizer.prototype.createPianoModule = function(){
 	for (var i=0;i<200;i++){
 		this.keyIsDown.push(false);
 	}
-	
+
 	function keyup(e){
 		e.preventDefault();
 		e.stopPropagation();
@@ -121,9 +121,9 @@ Synthesizer.prototype.createPianoModule = function(){
 		function doKeyCheck(e, type){
 			if (self.keyIsDown[e.keyCode]){
 				self.keyIsDown[e.keyCode] = false;
-				if (type == "release") self.releaseNote();
+				if (type == "release") self.releaseNote(e);
 			}
-		}	
+		}
 	}
 
 	function keydown(e){
@@ -159,12 +159,12 @@ Synthesizer.prototype.createPianoModule = function(){
 		function doKeyCheck(e, type){
 			if (!self.keyIsDown[e.keyCode]){
 				self.keyIsDown[e.keyCode] = true;
-				if (type == "play") self.playNote();
+				if (type == "play") self.playNote(e);
 				if (type == "octave"){
 					self.changeOctave(e.keyCode);
 				}
 			}
-		}	
+		}
 	}
 }
 
@@ -214,18 +214,41 @@ Synthesizer.prototype.createNodes = function(){
 
 	this.endGain = this.context.createGainNode();
 	this.endGain.gain.value = .5;
-	
-	this.envelope = this.context.createEnvelope(parseFloat(this.attackInput.value),parseFloat(this.decayInput.value),parseFloat(this.sustainInput.value),parseFloat(this.releaseInput.value));
+
+	this.Osc1envelope = this.context.createEnvelope(parseFloat(this.attackInput.value),parseFloat(this.decayInput.value),parseFloat(this.sustainInput.value),parseFloat(this.releaseInput.value));
+	this.Osc2envelope = this.context.createEnvelope(parseFloat(this.attackInput.value),parseFloat(this.decayInput.value),parseFloat(this.sustainInput.value),parseFloat(this.releaseInput.value));
 
 //	this.feedbackDelay = this.context.createFeedbackDelay(0.3, 0.1);
 
-	this.osc1.connect(this.osc1Gain);
-//	this.osc2.connect(this.osc2Gain);
+/*	this.osc1.connect(this.osc1Gain);
+	this.osc2.connect(this.osc2Gain);
 
-	this.osc1Gain.connect(this.lopass);
-//	this.osc2Gain.connect(this.envelope);
+	this.osc1Gain.connect(this.Osc1envelope);
+	this.osc2Gain.connect(this.Osc2envelope);
 
-//	this.envelope.connect(this.lopass);
+	this.Osc1envelope.connect(this.lopass);
+	this.Osc2envelope.connect(this.lopass);
+
+	this.lopass.connect(this.hipass);
+
+	this.hipass.connect(this.dynamicCompressor);
+
+	this.dynamicCompressor.connect(this.endGain);
+
+	this.endGain.connect(this.context.destination);
+*/
+
+	this.customOscPair1 = this.context.createCustomOscillator(this.context);
+
+	this.customOscPair1.connect(this.lopass);
+
+	this.customOscPair2 = this.context.createCustomOscillator(this.context);
+
+	this.customOscPair2.connect(this.lopass);
+
+	this.customOscPair3 = this.context.createCustomOscillator(this.context);
+
+	this.customOscPair3.connect(this.lopass);
 
 	this.lopass.connect(this.hipass);
 
@@ -235,9 +258,7 @@ Synthesizer.prototype.createNodes = function(){
 
 	this.endGain.connect(this.context.destination);
 
-	this.osc1.noteOn(0);
 
-	
 
 	this.triangleTypeElemOsc1 = document.getElementById('triangleTypeOsc1');
 
@@ -247,12 +268,14 @@ Synthesizer.prototype.createNodes = function(){
 
 
 Synthesizer.prototype.updateDynamicsCompressor = function(){
-	this.dynamicCompressor.threshold.value = -20; // -100 0
+	//this.dynamicCompressor.threshold.value = -20; // -100 0
 	//this.dynamicCompressor.knee.value = 10; // 0 40
 	//this.dynamicCompressor.ratio.value = 20; //1 20
-	this.dynamicCompressor.attack.value = 0.1; //0 1
+	//this.dynamicCompressor.attack.value = 0.1; //0 1
 	//this.dynamicCompressor.release.value = .013; //0 1
 }
+
+/*  not being used !  start */
 
 Synthesizer.prototype.updateOscGain = function(e){
 	var target = e.target;
@@ -263,6 +286,8 @@ Synthesizer.prototype.updateOscGain = function(e){
 		this.osc2Gain.gain.value = parseFloat(this.osc2GainInput.value);
 	}
 }
+
+/*  not being used !  end */
 
 Synthesizer.prototype.updateEndGain = function(e){
 	this.endGain.gain.value = parseFloat(this.endGainInput.value);
@@ -281,17 +306,15 @@ Synthesizer.prototype.changeOctave = function(direction){
 			this.octaveElement.innerHTML = this.currentOctave;
 		}
 	}
-	console.log(this.currentOctave);
 }
 
 
-Synthesizer.prototype.setOscFreq = function(){
+Synthesizer.prototype.setOscFreq = function(oscPairNr){
 	var freq = this.baseFreq;
 	var tempOctave = 0;
 	var tempSteps = 0;
 	if (this.currentOctave < this.baseOctave){
 		tempOctave = this.currentOctave - this.baseOctave;
-
 		tempSteps = 12 * tempOctave + this.currentSteps;
 		console.log(tempSteps);
 	}else if (this.currentOctave == 4){
@@ -302,22 +325,30 @@ Synthesizer.prototype.setOscFreq = function(){
 	}
 
 	freq = this.baseFreq * Math.pow(this.root,tempSteps);
-	console.log(freq);
-	this.osc1.frequency.value = freq;
-	this.osc2.frequency.value = freq;
+	if (oscPairNr == 1){
+		this.customOscPair1.frequency(freq,freq);
+	}
+	if (oscPairNr == 2){
+		this.customOscPair2.frequency(freq,freq);
+	}
+	if (oscPairNr == 3){
+		this.customOscPair3.frequency(freq,freq);
+	}
 }
 
 Synthesizer.prototype.updateDetuneValue = function(){
-	this.osc2.detune.value = parseFloat(this.detuneInput.value);
-	console.log(this.osc2.detune.value);
+	this.customOscPair1.detune(parseFloat(this.detuneInput.value));
+	this.customOscPair2.detune(parseFloat(this.detuneInput.value));
+	this.customOscPair3.detune(parseFloat(this.detuneInput.value));
+
 }
 
 Synthesizer.prototype.updateLopassValue = function(){
-	this.lopass.frequency.value = parseFloat(this.lopassInput.value);	
+	this.lopass.frequency.value = parseFloat(this.lopassInput.value);
 };
 
 Synthesizer.prototype.updateHipassValue = function(){
-	this.hipass.frequency.value = parseFloat(this.hipassInput.value);	
+	this.hipass.frequency.value = parseFloat(this.hipassInput.value);
 };
 
 Synthesizer.prototype.updateEnvelopeSettings = function(e){
@@ -329,45 +360,63 @@ Synthesizer.prototype.updateEnvelopeSettings = function(e){
 
 Synthesizer.prototype.playNote = function(e){
 
-	//this.envelope.cancelCurrentFades();
 	console.log('play');
-	var now = this.context.currentTime;
 
-//	this.osc2.noteOn(0);
-	this.setOscFreq();
-//	this.envelope.trigger();
+	if (!this.customOscPair1.isAssignedToKey()){
+		this.setOscFreq(1);
+		this.customOscPair1.trigger(e);
+		console.log('osc1 play');
+	}else if (!this.customOscPair2.isAssignedToKey()){
+		this.setOscFreq(2);
+		this.customOscPair2.trigger(e);
+		console.log('osc2 play');
+	}else if (!this.customOscPair3.isAssignedToKey()){
+		this.setOscFreq(3);
+		this.customOscPair3.trigger(e);
+		console.log('osc3 play');
+	}
 }
 
 Synthesizer.prototype.releaseNote = function(e){
 
 	console.log('release');
-//	this.envelope.release();
 	var now = this.context.currentTime;
-	console.log(this.osc1.playbackState);
-	console.log(now+parseFloat(this.releaseInput.value));
-//	this.osc1.disconnect();
+
+	if (this.customOscPair1.currKeyCode == e.keyCode){
+		this.customOscPair1.release(now);
+		console.log('osc1 release');
+	}else if (this.customOscPair2.currKeyCode == e.keyCode){
+		this.customOscPair2.release(now);
+		console.log('osc2 release');
+	}else if (this.customOscPair3.currKeyCode == e.keyCode){
+		this.customOscPair3.release(now);
+		console.log('osc3 release');
+	}
 }
 
 Synthesizer.prototype.setActiveWaveFormOsc1 = function(elem){
-	
+
 	for (var i=0;i<this.triangleTypeElemOsc1.children.length;i++){
 		this.triangleTypeElemOsc1.children[i].classList.remove('active');
 	}
 	if (!elem.classList.contains('active')){
 		elem.classList.add('active');
 	}
-	this.osc1.type = elem.getAttribute('data_wave_type');
+	this.customOscPair1.wavetype(elem.getAttribute('data_wave_type'), 1);
+	this.customOscPair2.wavetype(elem.getAttribute('data_wave_type'), 1);
+	this.customOscPair3.wavetype(elem.getAttribute('data_wave_type'), 1);
 }
 Synthesizer.prototype.setActiveWaveFormOsc2 = function(elem){
-	
+
 	for (var i=0;i<this.triangleTypeElemOsc2.children.length;i++){
 		this.triangleTypeElemOsc2.children[i].classList.remove('active');
 	}
 	if (!elem.classList.contains('active')){
 		elem.classList.add('active');
 	}
-	this.osc2.type = elem.getAttribute('data_wave_type');
-
+	this.customOscPair1.wavetype(elem.getAttribute('data_wave_type'), 2);
+	this.customOscPair2.wavetype(elem.getAttribute('data_wave_type'), 2);
+	this.customOscPair3.wavetype(elem.getAttribute('data_wave_type'), 2);
 }
 
 
