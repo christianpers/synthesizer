@@ -1,0 +1,92 @@
+/**
+
+//HTML5 Boilerplate + Normalize
+*= require "_vendor/normalize.css"
+*= require "_vendor/html5bp.css"
+
+//Grid
+*= require "_layout/grid"
+
+*/
+
+.main{
+	max-width: 42em;
+}
+
+.container{
+	margin-bottom: 50px;
+}
+
+#envelopeControlArea{
+	margin-top: 40px;
+	
+}
+
+#triangleTypeOsc1{
+	margin-bottom: 10px;
+	a{
+		display: inline-block;
+		margin-left: 20px;
+		text-decoration: none;
+		color: gray;
+		&:nth-child(1){
+			margin-left: 0;
+		}
+		&:hover{
+			text-decoration: underline;
+		}
+		&.active{
+			color: black;
+		}
+
+	}
+}
+
+.osc2Container{
+	#triangleTypeOsc2{
+		display: inline-block;
+		a{
+			display: inline-block;
+			margin-left: 20px;
+			text-decoration: none;
+			color: gray;
+			&:nth-child(1){
+				margin-left: 0;
+			}
+			&:hover{
+				text-decoration: underline;
+			}
+			&.active{
+				color: black;
+			}
+
+		}
+	}
+
+
+}
+
+
+form{
+	display: inline-block;
+	
+	label{
+		font-size: .6em;
+		margin-left: 20px;
+		&:nth-child(1){
+			margin-left: 0;
+		}
+		
+	}
+	
+}
+
+
+
+
+#freqContainer{
+
+	p{ margin: 0;}
+	h4{ margin: 0;}
+}
+
