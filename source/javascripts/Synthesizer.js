@@ -129,7 +129,7 @@ Synthesizer.prototype.createPianoModule = function(){
 	function keydown(e){
 		e.preventDefault();
 		e.stopPropagation();
-	//	console.log(e.keyCode);
+		console.log(e.keyCode);
 		switch (e.keyCode){
 			case 68 :
 				self.currentSteps = 5;
@@ -144,6 +144,7 @@ Synthesizer.prototype.createPianoModule = function(){
 				doKeyCheck(e,"play");
 				break;
 			case 70 :
+
 				doKeyCheck(e,"play");
 				break;
 			case 79 :
@@ -352,10 +353,15 @@ Synthesizer.prototype.updateHipassValue = function(){
 };
 
 Synthesizer.prototype.updateEnvelopeSettings = function(e){
-	this.envelope.att = parseFloat(this.attackInput.value);
-	this.envelope.dec = parseFloat(this.decayInput.value);
-	this.envelope.sus = parseFloat(this.sustainInput.value);
-	this.envelope.rel = parseFloat(this.releaseInput.value);
+	var envValues = [];
+	envValues.push(parseFloat(this.attackInput.value));
+	envValues.push(parseFloat(this.decayInput.value));
+	envValues.push(parseFloat(this.sustainInput.value));
+	envValues.push(parseFloat(this.releaseInput.value));
+
+	this.customOscPair1.setEnvelopeValues(envValues);
+	this.customOscPair2.setEnvelopeValues(envValues);
+	this.customOscPair3.setEnvelopeValues(envValues);
 }
 
 Synthesizer.prototype.playNote = function(e){
@@ -385,10 +391,10 @@ Synthesizer.prototype.releaseNote = function(e){
 	if (this.customOscPair1.currKeyCode == e.keyCode){
 		this.customOscPair1.release(now);
 		console.log('osc1 release');
-	}else if (this.customOscPair2.currKeyCode == e.keyCode){
+	}if (this.customOscPair2.currKeyCode == e.keyCode){
 		this.customOscPair2.release(now);
 		console.log('osc2 release');
-	}else if (this.customOscPair3.currKeyCode == e.keyCode){
+	}if (this.customOscPair3.currKeyCode == e.keyCode){
 		this.customOscPair3.release(now);
 		console.log('osc3 release');
 	}

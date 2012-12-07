@@ -130,6 +130,13 @@
     this.currKeyCode = undefined;
   }
 
+  Oscillator.prototype.setEnvelopeValues = function(val){
+    this.env.att = val[0];
+    this.env.dec = val[1];
+    this.env.sus = val[2];
+    this.env.rel = val[3];
+  }
+
   Oscillator.prototype.assignToKey = function(keyCode){
     this.currKeyCode = keyCode;
     console.log(this.currKeyCode);
@@ -148,8 +155,9 @@
     this.env.release();
     var self = this;
     setTimeout(function(){
+        console.log('timer fired',(self.env.rel*1000));
         self.removeKey();
-    },now+self.env.rel);
+    },self.env.rel*1000);
   }
   Oscillator.prototype.connect = function(dest){
     this.env.connect(dest);
