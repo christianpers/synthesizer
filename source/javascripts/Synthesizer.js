@@ -181,7 +181,6 @@ Synthesizer.prototype.createNodes = function(){
 	this.detuneInput = this.detuneForm.elements['detune'];
 
 	this.osc1 = this.context.createOscillator();
-
 	this.osc1Gain = this.context.createGainNode();
 	this.osc2Gain = this.context.createGainNode();
 
