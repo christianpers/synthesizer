@@ -114,32 +114,52 @@
   function Oscillator(context){
     var osc1 = this.osc1 = context.createOscillator();
     var osc2 = this.osc2 = context.createOscillator();
+
+    //default frequency
     var freq1 = this.freq1 = 440;
     var freq2 = this.freq2 = 220;
     osc1.frequency.value = freq1;
     osc2.frequency.value = freq2;
+
+    //default wave settings
     var wave1 = this.wave1 = 0;
-    var wave2 = this.wave2 = 2;
+    var wave2 = this.wave2 = 0;
     osc1.type = wave1;
     osc2.type = wave2;
+
+    //create the envelope
     var env  = this.env = context.createEnvelope(0.001, 0.5, 0.6, 0.3);
-    osc1.connect(env);
-    osc2.connect(env);
+
+    //pre env gain nodes
+    var gain1 = this.gain1 = context.createGainNode();
+    var gain2 = this.gain2 = context.createGainNode();
+    osc1.connect(gain1);
+    osc2.connect(gain2);
+
+    //connect gains to the envelope
+    gain1.connect(env);
+    gain2.connect(env);
+
+    //turn on the oscillators
     osc1.noteOn(0);
     osc2.noteOn(0);
     this.currKeyCode = undefined;
   }
 
+  Oscillator.prototype.setPreGain1 = function(gain1, gain2){
+    this.gain1.value = gain1;
+  }
+  Oscillator.prototype.setPreGain2 = function(gain1, gain2){
+    this.gain2.value = gain2;
+  }
   Oscillator.prototype.setEnvelopeValues = function(val){
     this.env.att = val[0];
     this.env.dec = val[1];
     this.env.sus = val[2];
     this.env.rel = val[3];
   }
-
   Oscillator.prototype.assignToKey = function(keyCode){
     this.currKeyCode = keyCode;
-    console.log(this.currKeyCode);
   }
   Oscillator.prototype.removeKey = function(){
     this.currKeyCode = undefined;
@@ -169,7 +189,6 @@
   Oscillator.prototype.frequency = function(freq1, freq2){
     this.osc1.frequency.value = freq1;
     this.osc2.frequency.value = freq2;
-    console.log('freq updated', freq1, freq2);
   }
   Oscillator.prototype.detune = function(val){
     this.osc2.detune.value = val;

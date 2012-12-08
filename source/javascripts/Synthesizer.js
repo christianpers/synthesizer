@@ -276,7 +276,6 @@ Synthesizer.prototype.updateDynamicsCompressor = function(){
 	//this.dynamicCompressor.release.value = .013; //0 1
 }
 
-/*  not being used !  start */
 
 Synthesizer.prototype.updateOscGain = function(e){
 	var target = e.target;
@@ -288,7 +287,6 @@ Synthesizer.prototype.updateOscGain = function(e){
 	}
 }
 
-/*  not being used !  end */
 
 Synthesizer.prototype.updateEndGain = function(e){
 	this.endGain.gain.value = parseFloat(this.endGainInput.value);
